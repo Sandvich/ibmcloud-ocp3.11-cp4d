@@ -65,7 +65,7 @@ Your cluster will be up and available at a url with this format
 
 The default credentials are:
 
-```
+```text
 username: ocpadmin
 password: Ch4ngeM3
 ```

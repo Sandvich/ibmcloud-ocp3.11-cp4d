@@ -1,14 +1,9 @@
-- name: setup known hosts
-  shell: |
-    ssh-keyscan {{ master.name }}.{{ cluster_domain }} >> /root/.ssh/known_hosts
-    ssh-keyscan {{ master.name }} >> /root/.ssh/known_hosts
-    ssh-keyscan {{ master.private_ip }} >> /root/.ssh/known_hosts
-- name: setup known hosts
-  shell:  |
-    ssh-keyscan {{ item.name }}.{{ cluster_domain }} >> /root/.ssh/known_hosts
-    ssh-keyscan {{ item.name }} >> /root/.ssh/known_hosts
-    ssh-keyscan {{ item.private_ip }} >> /root/.ssh/known_hosts
-  with_items: "{{workers}}"
+- name: setup known hosts (master)
+  include_tasks: keyfile_management.yaml
+  with_items: "{{ [ master ] }}"
+- name: setup known hosts (workers)
+  include_tasks: keyfile_management.yaml
+  with_items: "{{ workers }}"
 - name: copy variables
   copy:
     src: "{{playbook_dir}}/installer_files/group_vars"
