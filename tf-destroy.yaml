@@ -1,0 +1,11 @@
+- hosts: localhost
+  tasks:
+  - name: Confirm destruction
+    pause:
+      prompt: "Are you sure you want to destroy? (yes/no)"
+    register: tf_pause
+  - name: Destroying resources
+    terraform:
+      project_path: "{{playbook_dir}}"
+      state: absent
+    when: tf_pause.user_input | bool

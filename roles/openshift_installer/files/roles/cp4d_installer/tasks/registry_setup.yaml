@@ -1,19 +1,12 @@
 - name: Create docker-registry pvc
-  command: |
-    cat <<EOF | oc create -f -
-    apiVersion: "v1"
-    kind: "PersistentVolumeClaim"
-    metadata:
-      name: docker-registry
-    spec:
-      accessModes:
-        - "ReadWriteMany"
-      resources:
-        requests:
-          storage: "200Gi"
-      storageClassName: portworx-shared-sc
-    EOF
+  command: oc create -f /opt/installer/roles/cp4d_installer/files/docker-registry-pvc.yaml
 - name: Add registry-storage to registry deployment
-  command: oc set volume deploymentconfigs/docker-registry --add --name=registry-storage -t pvc --claim-name=docker-registry --overwrite
+  command: oc set volume -n default deploymentconfigs/docker-registry --add --name=registry-storage -t pvc --claim-name=docker-registry --overwrite
 - name: patch deployments to 3 for registry
   command: oc patch deploymentconfigs/docker-registry -n default -p '{"spec":{"replicas":3}}'
+- name: wait for registry pods
+  shell: oc get pods -n default -l deploymentconfig=docker-registry --no-headers | grep Running | wc -l
+  register: reg_cmd
+  retries: 50
+  delay: 15
+  until: reg_cmd.stdout == "3"

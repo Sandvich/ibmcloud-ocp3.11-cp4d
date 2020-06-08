@@ -2,6 +2,7 @@
 masters
 nodes
 etcd
+lb
 
 [OSEv3:vars]
 openshift_deployment_type=openshift-enterprise
@@ -12,22 +13,56 @@ openshift_master_default_subdomain=apps.{{cluster_domain}}
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
 openshift_master_htpasswd_users={'ocpadmin': '$apr1$AeLdhIiN$VTRD43OglLcEyH7bOVXPP0'} #Ch4ngeM3
 openshift_registry_selector='node-role.kubernetes.io/compute=true'
-etcd_ip={{master.private_ip}}
 openshift_docker_options="--log-opt  max-size=1M --log-opt max-file=3 --insecure-registry 172.30.0.0/16 --log-driver=json-file"
 os_firewall_use_firewalld=True
 openshift_docker_selinux_enabled=false
-
-[nodes:children]
-masters
-compute
+{% if master|length > 1 %}
+openshift_master_cluster_method=native
+openshift_master_cluster_hostname={{lb[0].name}}.{{cluster_domain}}
+openshift_master_cluster_public_hostname={{lb[0].name}}.{{cluster_domain}}
+{% endif %}
 
 [masters]
-{{master.name}}.{{cluster_domain}} openshift_ip={{master.private_ip}} openshift_node_group_name='node-config-master-infra'
+{% for item in master %}
+{{item.name}}.{{cluster_domain}}
+{% endfor %}
 
 [etcd]
-{{master.name}}.{{cluster_domain}} openshift_ip={{master.private_ip}}
-
-[compute]
-{% for item in workers %}
-{{item.name}}.{{cluster_domain}} openshift_ip={{item.private_ip}} openshift_node_group_name='node-config-compute'
+{% for item in master %}
+{{item.name}}.{{cluster_domain}}
 {% endfor %}
+
+[lb]
+{% for item in lb %}
+{{item.name}}.{{cluster_domain}}
+{% endfor %}
+
+[nodes]
+{% if master|length == 1 %}
+{% for item in master %}
+{{item.name}}.{{cluster_domain}} openshift_node_group_name='node-config-master-infra'
+{% endfor %}
+{% else %}
+{% for item in master %}
+{{item.name}}.{{cluster_domain}} openshift_node_group_name='node-config-master'
+{% endfor %}
+{% for item in lb %}
+{{item.name}}.{{cluster_domain}} openshift_node_group_name='node-config-infra'
+{% endfor %}
+{% endif %}
+{% for item in workers %}
+{{item.name}}.{{cluster_domain}} openshift_node_group_name='node-config-compute'
+{% endfor %}
+
+# below is a helper inventory set for running additional tasks
+[workers] 
+{% for item in workers %}
+{{item.name}}.{{cluster_domain}}
+{% endfor %}
+
+[all:vars]
+wsl_install={{wsl_install}}
+wkc_install={{wkc_install}}
+wkc_patch={{wkc_patch}}
+namespace={{namespace}}
+subnet={{subnet}}

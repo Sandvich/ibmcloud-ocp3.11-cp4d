@@ -1,8 +1,11 @@
+- hosts: localhost
+  roles:
+  - terraform
 - hosts: installer
   remote_user: root
   roles:
   - installer
-- hosts: ocp_workers,ocp_masters
+- hosts: ocp_workers,ocp_masters,ocp_lb
   remote_user: root
   roles:
   - cluster
@@ -12,6 +15,15 @@
   - openshift_installer
 - hosts: localhost
   tasks:
-  - debug:
-      msg: | 
-        Now ssh to the installer and run the last playbook `ssh root@{{installer.public_ip}} -i {{playbook_dir}}/installer_files/id_rsa ansible-playbook /opt/installer/main.yaml`
+  - pause:
+      prompt: |
+        Now ssh to the installer and run the last playbook: 
+        ssh root@{{installer.public_ip}} -i {{playbook_dir}}/installer_files/id_rsa "tmux new -d -s ocp-install \; send 'ansible-playbook /opt/installer/main.yaml' Enter"
+
+        The above command will run the installer in a disconnected tmux session to attach and monitor
+        ssh root@{{installer.public_ip}} -i {{playbook_dir}}/installer_files/id_rsa
+
+        then run
+
+        tmux a -t ocp-install
+      seconds: 5

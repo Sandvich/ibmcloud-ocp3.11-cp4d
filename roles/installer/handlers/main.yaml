@@ -3,3 +3,7 @@
     name: dnsmasq
     enabled: yes
     state: restarted
+- name: restart ssh
+  service:
+    name: sshd
+    state: restarted

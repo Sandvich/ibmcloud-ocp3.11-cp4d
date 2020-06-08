@@ -1,6 +1,6 @@
 # Cloud Pak for Data installer for IBM Cloud
 
-This repository houses a set of automation for deploying infrastructure, openshift, and cloud pak for data.
+This repository houses a set of automation for deploying infrastructure, openshift 3.11, portworx, and cloud pak for data.
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ in a folder in the root of this repository called `installer_files` place 2 file
 - cloudpak4data-ee-v2.5.0.0.tgz
 - repo.yaml
 
-These can be acquired by running the CP4D bin file.
+These can be acquired by running the CP4D bin file. The repo.yaml should be completed with your details so that installation of the cloud pak is successful.
 
 ## Variables
 
@@ -41,17 +41,22 @@ Additionally it is recommended to set additional variables:
 
 ## Deployment
 
+**If you intend to use the portworx instance as your primary storage method you must deploy a minimum of 3 worker nodes**
+
 To run this deployment run this series of commands from the root folder
 
 ```bash
+# Optional commands
 terraform init
 terraform plan #check your plan is as expected
-terraform apply
+
+# the first thing the ansible playbook does is run the terraform to provision your infrastructure
 ansible-playbook main.yaml
 ```
 
 due to some complications with the deployment of ocp the last command must be run from the installer node provisioned during the deployment.
-This command will also be printed at the end of the previous playbook
+This command will also be printed at the end of the previous playbook as a one-liner
+It is recommended to run this in a `tmux` session as it can take a long time to complete
 
 ```bash
 ssh root@<installer_ip> -i <project_dir>/installer_files/id_rsa
@@ -64,6 +69,7 @@ Your cluster will be up and available at a url with this format
 `https://console.apps.<cluster_name>.<domain>`
 
 The default credentials are:
+currently the password is unable to be changed until after the cloud pak is installed.
 
 ```text
 username: ocpadmin

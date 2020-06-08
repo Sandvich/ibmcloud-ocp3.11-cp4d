@@ -2,12 +2,29 @@
   import_playbook: /opt/openshift/playbooks/prerequisites.yml
 - name: run ocp install
   import_playbook: /opt/openshift/playbooks/deploy_cluster.yml
-- hosts: masters
+- hosts: masters[0]
   remote_user: root
   tasks:
   - name: setting cluster-admin role
     command: oc create clusterrolebinding ocpadmin --clusterrole cluster-admin --user ocpadmin
   ignore_errors: yes
+- hosts: workers
+  remote_user: root
+  tasks:
+    - include_role:
+        name: wsl_configure
+      when: wsl_install == True
+- hosts: workers
+  remote_user: root
+  tasks:
+    - include_role:
+        name: wkc_configure
+      when: wkc_install == True
+- hosts: workers
+  remote_user: root
+  tasks:
+    - include_role:
+        name: portworx_configure
 - hosts: localhost
   remote_user: root
   roles:

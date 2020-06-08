@@ -7,10 +7,10 @@ redhat_un = "redhat@example.com"
 redhat_pw = "redhat_password"
 openshift_pool_id = "poolid"
 
-# Recommended variables - you should probably set these but the system will handle it if you don't
+# Recommended variables - you should probably set these but they will be set as shown if you leave them commented
 # cluster_name = "cluster"
-# region = "lon02"
-# datacenter = "eu-gb"
+# region = "eu-gb"
+# datacenter = "lon02"
 # tags = [""]
 # Name of an ssh key previously uploaded to IBM Cloud: https://cloud.ibm.com/docs/vpc-on-classic-vsi?topic=vpc-on-classic-vsi-managing-ssh-keys
 # ssh_key = [ "example-ssh-key" ]
@@ -18,13 +18,23 @@ openshift_pool_id = "poolid"
 # Other variables that you can change if you want to. If left commented, they will be populated with the value shown here.
 # os_reference = "REDHAT_7_64"
 # installer_os_reference = "CENTOS_7_64"
-# master_qty = 1
-# master_name = "master"
+# master_qty = 3
+# master_name = ["master1", "master2", "master3"]
 # master_flavor = "B1_8X32X100"
 # worker_qty = 3
-# worker_name = "worker"
+# worker_name = ["worker1", "worker2", "worker3"]
 # worker_flavor = "B1_32X64X100"
 # resource_group_name = "ocp_resources"
 # generation = "1"
 # installer_flavor = "B1_2X8X100"
+
+# Password cannot currently be set using this variable
 # openshift_password = "Ch4ngeM3"
+
+# namespace to install CP4D services into
+# namespace = "zen"
+
+# Services integration
+# wsl_install = false
+# wkc_install = false
+# wkc_patches = false

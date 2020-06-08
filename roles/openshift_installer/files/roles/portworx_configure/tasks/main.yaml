@@ -1,0 +1,53 @@
+- name: install kernel headers
+  yum:
+    name: kernel-devel
+    state: present
+- name: create portworx zone
+  firewalld:
+    zone: portworx
+    permanent: yes
+    state: present
+  register: zone
+- name: reload on zone creation
+  command: firewall-cmd --reload
+  when: zone.changed == true
+- name: add subnet to firewalld zone
+  firewalld:
+    zone: portworx
+    permanent: yes
+    immediate: no
+    state: enabled
+    source: "{{subnet}}"
+- name: add tcp port range to portworx zone
+  firewalld:
+    zone: portworx
+    permanent: yes
+    immediate: no
+    state: enabled
+    port: 9001-9022/tcp
+- name: add udp port to portworx zone
+  firewalld:
+    zone: portworx
+    permanent: yes
+    immediate: no
+    state: enabled
+    port: 9002/udp
+- name: add nfs ports to portworx zone
+  firewalld:
+    zone: portworx
+    permanent: yes
+    immediate: no
+    state: enabled
+    port: "{{item}}"
+  loop:
+    - 2049/tcp
+    - 2049/udp
+    - 111/tcp
+    - 111/udp
+    - 20048/tcp
+    - 20048/udp
+- name: restart firewalld
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: firewalld

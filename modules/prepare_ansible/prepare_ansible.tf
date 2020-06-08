@@ -1,8 +1,11 @@
 resource "local_file" "inventory" {
   content  = <<EOT
 [ocp_masters]
-${var.master.public_ip}
-
+%{for master in var.master}${master.public_ip}
+%{endfor}
+[ocp_lb]
+%{for lb in var.lb}${lb.public_ip}
+%{endfor}
 [ocp_workers]
 %{for worker in var.workers}${worker.public_ip}
 %{endfor}
@@ -19,9 +22,15 @@ rh_user: ${var.rh_user}
 rh_pass: ${var.rh_pass}
 pool_id: ${var.pool_id}
 master: ${jsonencode(var.master)}
+lb: ${jsonencode(var.lb)}
 workers: ${jsonencode(var.workers)}
 installer: ${jsonencode(var.installer)}
 cluster_domain: ${var.cluster_domain}
+wsl_install: ${var.wsl_install}
+wkc_install: ${var.wkc_install}
+wkc_patch: ${var.wkc_patch}
+namespace: ${var.namespace}
+subnet: ${var.subnet}
 EOT
   filename = "${path.root}/installer_files/group_vars/all.yaml"
 }
@@ -29,7 +38,7 @@ EOT
 resource "local_file" "ssh_key" {
   content         = var.ssh_key.private_key_pem
   filename        = "${path.root}/installer_files/id_rsa"
-  file_permission = 0400
+  file_permission = 0600
 }
 
 resource "local_file" "ssh_key_public" {

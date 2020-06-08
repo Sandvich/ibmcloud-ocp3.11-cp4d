@@ -1,5 +1,5 @@
 - name: Login to cluster
-  command: oc login https://{{master['name']}}.{{cluster_domain}}:8443 --username ocpadmin --password Ch4ngeM3 --insecure-skip-tls-verify
+  command: oc login https://{{master[0]['name']}}.{{cluster_domain}}:8443 --username ocpadmin --password Ch4ngeM3 --insecure-skip-tls-verify
 - name: install docker
   yum:
     name: docker

@@ -1,3 +1,13 @@
+- name: load vars
+  include_vars:
+    dir: "{{playbook_dir}}/installer_files/group_vars"
+- name: Disallow password authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^PasswordAuthentication"
+    line: "PasswordAuthentication no"
+    state: present
+  notify: restart ssh
 - name: make sure line 'dns=none' is set in /etc/NetworkManager/NetworkManager.conf
   ini_file:
     path: /etc/NetworkManager/NetworkManager.conf
@@ -72,7 +82,6 @@
     - kexec-tools
     - sos
     - psacct
-    - openshift-ansible
     - docker-1.13.1
     - docker-novolume-plugin
     state: present
@@ -98,6 +107,11 @@
 - name: fix docker storage
   include_tasks: docker-storage.yaml
   when: docker_storage is not search("dm.thinpooldev")
+- name: restart docker (to ensure storage options are detected for the OCP install)
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: docker
 - name: Making sure NetworkManager is started
   service:
     name: NetworkManager

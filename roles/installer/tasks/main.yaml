@@ -1,14 +1,27 @@
+- name: load vars
+  include_vars:
+    dir: "{{playbook_dir}}/installer_files/group_vars"
+- name: Disallow password authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^PasswordAuthentication"
+    line: "PasswordAuthentication no"
+    state: present
+  notify: restart ssh
 - name: parse interfaces
   set_fact:
     internal_interface="{{ item }}"
   when: hostvars[inventory_hostname]['ansible_{{item}}']['ipv4']['address'] == installer.private_ip
   with_items:
   - "{{ ansible_interfaces }}"
+- name: enable EPEL repo
+  yum:
+    name: epel-release
+    state: present
 - name: Install required packages
   yum:
     name:
     - dnsmasq
-    - epel-release
     - python-jinja2
     - pyOpenSSL
     - python-lxml
@@ -18,6 +31,7 @@
     - python-passlib
     - bind-utils
     - ansible
+    - tmux
     state: present
 - name: Update packages
   yum:
@@ -37,19 +51,30 @@
     group: root
     mode: 0644
     backup: yes
+- name: Set hosts to not auto-update
+  lineinfile:
+    path: /etc/cloud/cloud.cfg
+    line: "manage_etc_hosts: False"
+    regexp: "^manage_etc_hosts"
 - name: Adding masters to hosts file
   lineinfile:
     path: /etc/hosts
-    line: "{{master.private_ip}} {{ master.name }}.{{cluster_domain}} {{master.name}}"
+    line: "{{item.public_ip}} {{ item.name }}.{{cluster_domain}} {{item.name}}"
+  loop: "{{ master }}"
+- name: Adding lb to hosts file
+  lineinfile:
+    path: /etc/hosts
+    line: "{{item.public_ip}} {{ item.name }}.{{cluster_domain}} {{item.name}}"
+  loop: "{{ lb }}"
 - name: Adding workers to hosts file
   lineinfile:
     path: /etc/hosts
-    line: "{{item.private_ip}} {{ item.name }}.{{cluster_domain}} {{item.name}}"
+    line: "{{item.public_ip}} {{ item.name }}.{{cluster_domain}} {{item.name}}"
   loop: "{{ workers }}"
 - name: Adding installer to hosts file
   lineinfile:
     path: /etc/hosts
-    line: "{{installer.private_ip}} {{ installer.name }}.{{cluster_domain}} {{installer.name}}"
+    line: "{{installer.public_ip}} {{ installer.name }}.{{cluster_domain}} {{installer.name}}"
 - name: Adding domain-needed to dnsmasq.conf
   lineinfile:
     path: /etc/dnsmasq.conf
@@ -80,10 +105,17 @@
     regexp: '^#no-dhcp-interface='
     line: "no-dhcp-interface="
   notify: "Restart DNSMasq"
-- name: append address to dnsmasq
+- name: append master address to dnsmasq
   lineinfile:
     path: /etc/dnsmasq.conf
-    line: address=/apps.{{ cluster_domain }}/{{ master.private_ip }}
+    line: address=/apps.{{ cluster_domain }}/{{ master[0].public_ip }}
+  when: master|length == 1
+  notify: "Restart DNSMasq"
+- name: append LB address to dnsmasq
+  lineinfile:
+    path: /etc/dnsmasq.conf
+    line: address=/apps.{{ cluster_domain }}/{{ lb[0].public_ip }}
+  when: lb|length == 1
   notify: "Restart DNSMasq"
 - name: Copy ssh key
   copy:
@@ -92,7 +124,7 @@
     mode: '0400'
 - name: copy public key
   copy:
-    src: "{{playbook_dir}}/installer_files/id_rsa"
+    src: "{{playbook_dir}}/installer_files/id_rsa.pub"
     dest: /root/.ssh/id_rsa.pub    
 - name: install client tools
   unarchive:

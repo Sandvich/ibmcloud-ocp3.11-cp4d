@@ -1,0 +1,26 @@
+- name: set vm.max_map_count on workers
+  sysctl:
+    name: vm.max_map_count
+    value: '262144'
+- name: set kernel.msgmax
+  sysctl:
+    name: kernel.msgmax
+    value: '65536'
+- name: set kernel.sem
+  sysctl:
+    name: kernel.sem
+    value: '250 256000 100 4096'
+- name: set kernel.msgmnb
+  sysctl:
+    name: kernel.msgmnb
+    value: '65536'
+- name: set soft file limits
+  lineinfile:
+    path: /etc/security/limits.conf
+    line: 'soft   nofile      66560'
+    regexp: '^soft   nofile'
+- name: set hard file limits
+  lineinfile:
+    path: /etc/security/limits.conf
+    line: 'hard   nofile      66560'
+    regexp: '^hard   nofile'

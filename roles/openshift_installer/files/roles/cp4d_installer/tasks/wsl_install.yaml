@@ -1,33 +1,21 @@
-- name: Create openshift project
-  command: oc new-project {{namespace}}
-  ignore_errors: yes
-- name: set executable permssion on cpd-linux
-  file:
-    path: /opt/cp4d/bin/cpd-linux
-    mode: '0744'
-    owner: root
-    group: root
 - name: extract docker registry
   command: oc get routes docker-registry -n default -o template=\{\{.spec.host}}
   register: docker_registry
 - name: get token
   command: oc whoami -t
   register: oc_token
-- name: Run lite adm setup
-  command: bin/cpd-linux adm -r repo.yaml -a lite -n {{namespace}} --apply --accept-all-licenses
+- name: Run wsl adm setup
+  command: bin/cpd-linux adm -r repo.yaml -a wsl -n {{namespace}} --apply --accept-all-licenses 
   args:
     chdir: /opt/cp4d
-- name: add the cp4d namespace role to ocpadmin
-  command: oc adm policy add-role-to-user cpd-admin-role ocpadmin --role-namespace={{namespace}} -n {{namespace}}
-  ignore_errors: yes
-- name: Run lite install
+- name: Run wsl install
   command: |
     bin/cpd-linux
     -r repo.yaml
-    -a lite
+    -a wsl
     -n {{namespace}}
     -c portworx-shared-gp
-    -o cpd-portworx/overrides/cp-override.yaml
+    -o cpd-portworx/overrides/ws-override.yaml
     --transfer-image-to {{docker_registry.stdout}}/{{namespace}}
     --cluster-pull-prefix docker-registry.default.svc:5000/{{namespace}}
     --target-registry-username ocadmin

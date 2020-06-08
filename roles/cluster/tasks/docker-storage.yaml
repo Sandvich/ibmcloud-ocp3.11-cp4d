@@ -41,6 +41,7 @@
     content: |
       DEVS=/dev/xvdc
       VG=docker-vg
+      EXTRA_STORAGE_OPTIONS="--storage-opt dm.basesize=20G"
     dest: /etc/sysconfig/docker-storage-setup
     mode: u+rw,g+r,o+r
   notify: restart docker
